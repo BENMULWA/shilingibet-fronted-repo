@@ -31,7 +31,8 @@ export default function Withdraw() {
   const [airtimePhone, setAirtimePhone] = useState("");
 
   // M-Pesa state
-  const [amount, setAmount] = useState(100);
+  // TEMP: minimum lowered 100 -> 10 for testing, revert after (search MIN_WITHDRAWAL_TEST)
+  const [amount, setAmount] = useState(10); // MIN_WITHDRAWAL_TEST
   const tax = amount * 0.05;
   const fee = 0;
   const disbursed = amount - tax - fee;
@@ -90,8 +91,8 @@ export default function Withdraw() {
         return toast.error("You don't have enough amount to make this transaction");
       }
 
-      if (+amount < 100) {
-        return toast.error("Withdrawals start at Ksh 100 and above.");
+      if (+amount < 10) { // MIN_WITHDRAWAL_TEST
+        return toast.error("Withdrawals start at Ksh 10 and above.");
       }
 
       if (activeWithdrawWallet === "airtime" && !airtimePhone.trim()) {
@@ -106,7 +107,7 @@ export default function Withdraw() {
         },
         {
           onSuccess: () => {
-            setAmount(100);
+            setAmount(10); // MIN_WITHDRAWAL_TEST
             if (activeWithdrawWallet === "airtime") {
               setAirtimePhone("");
             }
@@ -349,7 +350,7 @@ export default function Withdraw() {
                   <BsInfoCircle className="mt-0.5 text-primary text-lg shrink-0" />
                   <p>
                     Withdrawal range is{" "}
-                    <span className="font-semibold text-primary">KES 100 – 70,000</span>.
+                    <span className="font-semibold text-primary">KES 10 – 70,000</span>. {/* MIN_WITHDRAWAL_TEST */}
                   </p>
                 </div>
 
