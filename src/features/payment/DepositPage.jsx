@@ -122,6 +122,7 @@ export default function Deposit() {
   );
   const [cryptoAsset, setCryptoAsset] = useState("USDT");
   const [miniPayAmount, setMiniPayAmount] = useState("");
+  const [referenceAmount, setReferenceAmount] = useState("");
 
   const isMiniPay = useMiniPay();
   const { address: connectedAddress } = useAccount();
@@ -806,10 +807,31 @@ export default function Deposit() {
                   </div>
                 )}
 
+                {!isCryptoAddressLoading && !cryptoAddressError && cryptoDeposit?.address && (
+                  <div className="mb-4 rounded-lg border border-white/10 bg-background/40 p-3 md:p-4 text-xs md:text-sm text-[#9cae9f] space-y-1.5">
+                    {isMiniPay ? (
+                      <p>
+                        <span className="font-semibold text-primary">You're in MiniPay</span> — use{" "}
+                        <span className="font-semibold">Pay with MiniPay</span> below to send directly.
+                        The QR and address further down are only needed if you'd rather send from a
+                        different wallet or device.
+                      </p>
+                    ) : (
+                      <p>
+                        <span className="font-semibold text-primary">This QR and address are for sending
+                        from your Celo wallet</span> (MiniPay, Valora, etc.) — scan with your phone's{" "}
+                        <span className="font-semibold">camera app</span>, not MiniPay's built-in scanner,
+                        which only reads phone numbers and MiniPay links. Easiest option: open your wallet
+                        app yourself and paste the copied address into its Send screen.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {!isCryptoAddressLoading && !cryptoAddressError && cryptoDeposit?.address && isMiniPay && (
                   <div className="mb-4 rounded-lg border border-primary/40 bg-secondary p-3 md:p-4 space-y-3">
                     <p className="text-xs md:text-sm text-primary font-semibold">
-                      MiniPay detected — pay directly, no QR needed
+                      Pay directly — no QR needed
                     </p>
                     <input
                       type="number"
@@ -865,10 +887,32 @@ export default function Deposit() {
                       </button>
                     </div>
 
+                    {!isMiniPay && (
+                      <div className="mt-3 md:mt-4">
+                        <label className="block text-xs md:text-sm text-[#9cae9f] mb-2">
+                          Amount you're planning to send (optional)
+                        </label>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          step="0.01"
+                          placeholder={`e.g. 50 ${cryptoAsset}`}
+                          value={referenceAmount}
+                          onChange={(e) => setReferenceAmount(e.target.value)}
+                          className="w-full rounded-lg px-4 py-2.5 border border-primary/40 bg-background/40 text-white placeholder:text-[#6f7f73] focus:outline-none focus:border-primary"
+                        />
+                        <p className="text-[11px] text-[#75877a] mt-1.5">
+                          This is just a reminder for you — it isn't sent anywhere. Your wallet app is
+                          where you actually enter the amount when you send.
+                        </p>
+                      </div>
+                    )}
+
                     <ul className="list-disc list-inside mt-3 md:mt-4 text-xs md:text-sm text-[#9cae9f] space-y-1 md:space-y-1.5">
                       <li className="break-words">
-                        Open MiniPay (or scan the QR from any Celo wallet) and send{" "}
-                        {cryptoAsset} on the <span className="font-semibold text-primary">Celo network</span> only.
+                        Send {cryptoAsset} to this address on the{" "}
+                        <span className="font-semibold text-primary">Celo network</span> only.
                       </li>
                       <li className="break-words">
                         This is your permanent {cryptoAsset} deposit address — reuse it any time.
