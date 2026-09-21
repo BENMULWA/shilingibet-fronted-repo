@@ -846,8 +846,10 @@ export default function Deposit() {
 
                 {!isCryptoAddressLoading && !cryptoAddressError && cryptoDeposit?.address && (
                   <>
-                    <div className="flex justify-center bg-white rounded-lg p-4 mb-4">
-                      <QRCodeSVG value={cryptoDeposit.address} size={176} />
+                    <div className="flex justify-center rounded-lg border border-dashed border-white/15 bg-[#07110b] p-4 mb-4">
+                      <div className="rounded-md bg-white p-3">
+                        <QRCodeSVG value={cryptoDeposit.address} size={176} />
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2 bg-secondary border border-primary/40 rounded-lg px-3 md:px-4 py-2.5 md:py-3.5">
