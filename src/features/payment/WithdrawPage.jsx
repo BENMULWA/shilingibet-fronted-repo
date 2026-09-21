@@ -17,7 +17,11 @@ const TABS = [
   ...(SHOW_CRYPTO_UI ? ["Crypto"] : []),
   "Comet App",
 ];
-const MIN_CRYPTO_WITHDRAWAL = 1;
+// Lowered from 1 for staging testing only — the backend has no minimum of
+// its own for crypto withdrawals (celoWithdraw just requires amount > 0 and
+// sufficient balance), so this is a pure UI guard. Restore to 1 before
+// pointing this build at production.
+const MIN_CRYPTO_WITHDRAWAL = 0.2;
 const CELO_WITHDRAW_ASSETS = ["USDT", "USDC", "cUSD"];
 const CELO_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
