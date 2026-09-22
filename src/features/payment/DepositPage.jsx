@@ -17,7 +17,20 @@ import {
   useUpdateBalance,
 } from "../../hooks/usePayment";
 import { useMiniPay } from "../../hooks/useMiniPay";
-import { USDT_CELO_MAINNET } from "../../utils/wagmiConfig";
+import {
+  USDT_CELO_MAINNET,
+  USDC_CELO_MAINNET,
+  CUSD_CELO_MAINNET,
+} from "../../utils/wagmiConfig";
+
+// Which Celo mainnet ERC-20 contract "Pay with MiniPay" (the one-tap
+// writeContract shortcut) targets for each asset. All three share the same
+// chainId (celo.id), only the contract/decimals differ.
+const MINIPAY_TOKEN_CONFIG = {
+  USDT: USDT_CELO_MAINNET,
+  USDC: USDC_CELO_MAINNET,
+  cUSD: CUSD_CELO_MAINNET,
+};
 import { BsInfoCircle } from "react-icons/bs";
 
 const CELO_DEPOSIT_ASSETS = ["USDT", "USDC", "cUSD"];
@@ -35,11 +48,19 @@ const depositAmounts = [
 ];
 
 const SHOW_CRYPTO_UI = true;
-// Card checkout is fully supported but hidden on deployments used for the
-// MiniPay tester demo (set VITE_SHOW_CARD_PAYMENT=false there) so testers
-// only see the three channels relevant to them: Mobile Money, Crypto/MiniPay,
-// and Fusion Fi. Left enabled everywhere else, local included.
-const SHOW_CARD_UI = import.meta.env.VITE_SHOW_CARD_PAYMENT !== "false";
+
+// ── Channel visibility flags ────────────────────────────────────────────
+// Comet App and card payments are temporarily switched off for the MiniPay
+// tester rollout — testers should only see Mobile Money and Crypto
+// (USDT/USDC/cUSD via MiniPay on Celo) right now. Nothing below this was
+// deleted, only hidden: flip these back to `true` once Comet/cards are
+// ready to come back, no other changes needed.
+const SHOW_COMET_UI = false;
+// Card checkout is fully built (see the "PAY WITH CARD TAB" block below)
+// but hidden the same way. Original env-driven toggle, restore if you want
+// per-deployment control again instead of a flat flag:
+//   const SHOW_CARD_UI = import.meta.env.VITE_SHOW_CARD_PAYMENT !== "false";
+const SHOW_CARD_UI = false;
 
 const getHostedCheckoutUrl = (response) => {
   const candidates = [
@@ -230,8 +251,12 @@ export default function Deposit() {
   };
 
   const handleMiniPaySend = () => {
-    if (cryptoAsset !== "USDT") {
-      toast.error("Pay with MiniPay currently only supports USDT.");
+    const tokenConfig = MINIPAY_TOKEN_CONFIG[cryptoAsset];
+    if (!tokenConfig) {
+      // Shouldn't happen — CELO_DEPOSIT_ASSETS and MINIPAY_TOKEN_CONFIG are
+      // meant to stay in sync — but fail safely with a clear message rather
+      // than calling writeContract() with an undefined address.
+      toast.error(`Pay with MiniPay doesn't support ${cryptoAsset} yet.`);
       return;
     }
 
@@ -246,19 +271,19 @@ export default function Deposit() {
       return;
     }
 
-    if (chainId !== USDT_CELO_MAINNET.chainId) {
+    if (chainId !== tokenConfig.chainId) {
       toast.error(
-        "MiniPay is on a different network. Turn off Developer Mode's \"Use Testnet\" toggle to send real USDT, then try again."
+        `MiniPay is on a different network. Turn off Developer Mode's "Use Testnet" toggle to send real ${cryptoAsset}, then try again.`
       );
       return;
     }
 
     writeContract({
-      address: USDT_CELO_MAINNET.address,
+      address: tokenConfig.address,
       abi: erc20Abi,
       functionName: "transfer",
-      args: [cryptoDeposit.address, parseUnits(miniPayAmount, USDT_CELO_MAINNET.decimals)],
-      chainId: USDT_CELO_MAINNET.chainId,
+      args: [cryptoDeposit.address, parseUnits(miniPayAmount, tokenConfig.decimals)],
+      chainId: tokenConfig.chainId,
     });
   };
 
@@ -275,12 +300,12 @@ export default function Deposit() {
     const amountNum = Number(fusionAmount);
 
     if (!email || !email.includes("@")) {
-      toast.error("Please enter a valid Fusion Fi email");
+      toast.error("Please enter a valid Comet App email");
       return;
     }
 
     if (!amountNum || amountNum < 10) {
-      toast.error("Minimum Fusion Fi deposit is KES 10");
+      toast.error("Minimum Comet App deposit is KES 10");
       return;
     }
 
@@ -303,7 +328,7 @@ export default function Deposit() {
           }
 
           toast.success(
-            "Fusion Fi order created. Complete the payment from the provider page once it becomes available."
+            "Comet App order created. Complete the payment from the provider page once it becomes available."
           );
         },
       }
@@ -462,17 +487,19 @@ export default function Deposit() {
                 </span>
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setTab("comet")}
-              className={`flex-1 py-2 md:py-2.5 rounded-md text-xs md:text-sm font-medium transition-all ${
-                tab === "comet"
-                  ? "bg-primary text-black shadow-md"
-                  : "text-[#9cae9f] hover:text-white"
-              }`}
-            >
-              Fusion Fi
-            </button>
+            {SHOW_COMET_UI && (
+              <button
+                type="button"
+                onClick={() => setTab("comet")}
+                className={`flex-1 py-2 md:py-2.5 rounded-md text-xs md:text-sm font-medium transition-all ${
+                  tab === "comet"
+                    ? "bg-primary text-black shadow-md"
+                    : "text-[#9cae9f] hover:text-white"
+                }`}
+              >
+                Comet App
+              </button>
+            )}
             {SHOW_CARD_UI && (
               <button
                 type="button"
@@ -488,11 +515,13 @@ export default function Deposit() {
             )}
           </div>
 
-          {SHOW_CRYPTO_UI && !SHOW_CARD_UI && (
+          {(!SHOW_COMET_UI || !SHOW_CARD_UI) && (
             <div className="rounded-lg bg-primary/10 border border-primary/20 px-3 py-2.5 text-xs text-[#b7c4ba]">
-              <span className="font-semibold text-primary">MiniPay testers:</span>{" "}
-              use the <span className="font-semibold text-primary">Crypto (USDT)</span> tab above to deposit
-              directly from your MiniPay wallet on the Celo network.
+              <span className="font-semibold text-primary">Two ways to deposit right now:</span>{" "}
+              <span className="font-semibold text-primary">Mobile Money</span> or{" "}
+              <span className="font-semibold text-primary">Crypto (USDT/USDC/cUSD)</span> — MiniPay
+              testers should use the Crypto tab to pay directly from their MiniPay wallet on Celo.{" "}
+              Comet App and card payments are coming soon.
             </div>
           )}
 
@@ -608,20 +637,20 @@ export default function Deposit() {
             </form>
           )}
 
-          {/* FUSION FI TAB */}
-          {tab === "comet" && (
+          {/* COMET APP TAB */}
+          {SHOW_COMET_UI && tab === "comet" && (
             <div className="space-y-6">
-              {/* Fusion Fi Logo / Header */}
+              {/* Comet App Logo / Header */}
               <div className="flex flex-col items-center gap-3 bg-background/60 border border-white/10 rounded-2xl p-6">
                 <img
-                  src="/fusion.png"
-                  alt="Fusion Fi"
+                  src="/Comet Logo.png"
+                  alt="Comet App"
                   className="h-24 w-24 object-contain"
                 />
                 <div className="text-center">
-                  <h3 className="text-lg font-bold text-[#d7e1d9]">Fusion Fi</h3>
+                  <h3 className="text-lg font-bold text-[#d7e1d9]">Comet App</h3>
                   <p className="text-xs text-[#75877a] mt-0.5">
-                    Create a hosted bill order and complete payment on Fusion Fi
+                    Create a hosted bill order and complete payment on Comet App
                   </p>
                 </div>
               </div>
@@ -629,11 +658,11 @@ export default function Deposit() {
               {/* Email Input */}
               <div>
                 <label className="block text-xs md:text-sm text-[#9cae9f] mb-2">
-                  Fusion Fi Email
+                  Comet App Email
                 </label>
                 <input
                   type="email"
-                  placeholder="Enter your Fusion Fi email"
+                  placeholder="Enter your Comet App email"
                   value={fusionEmail}
                   onChange={(e) => setFusionEmail(e.target.value)}
                   className="w-full rounded-lg px-5 py-3 border border-primary/40 placeholder:text-[#6f7f73] bg-transparent text-[#d7e1d9] focus:outline-none focus:border-primary transition"
@@ -662,7 +691,7 @@ export default function Deposit() {
                 disabled={isFusionLoading}
                 className="w-full rounded-lg bg-primary py-4 text-lg font-bold text-black transition hover:brightness-110 disabled:opacity-60"
               >
-                {isFusionLoading ? "Processing…" : "Continue to Fusion Fi"}
+                {isFusionLoading ? "Processing…" : "Continue to Comet App"}
               </button>
 
               {/* Info */}
@@ -670,7 +699,7 @@ export default function Deposit() {
                 <div className="flex items-start gap-3">
                   <BsInfoCircle className="mt-0.5 text-primary text-lg shrink-0" />
                   <p>
-                    The backend contract creates a pending Fusion Fi bill order
+                    The backend contract creates a pending Comet App bill order
                     first. Your wallet is credited only after the provider side
                     is completed and reconciled.
                   </p>
@@ -679,7 +708,7 @@ export default function Deposit() {
                   <BsInfoCircle className="mt-0.5 text-primary text-lg shrink-0" />
                   <p>
                     Make sure you use your registered{" "}
-                    <span className="font-semibold text-primary">Fusion Fi email</span>.
+                    <span className="font-semibold text-primary">Comet App email</span>.
                   </p>
                 </div>
               </div>
@@ -853,7 +882,7 @@ export default function Deposit() {
                     </button>
                     {chainId && chainId !== USDT_CELO_MAINNET.chainId && (
                       <p className="text-xs text-amber-300">
-                        MiniPay is on testnet (Developer Mode). Turn off "Use Testnet" to send real USDT that gets credited.{" "}
+                        MiniPay is on testnet (Developer Mode). Turn off "Use Testnet" to send real {cryptoAsset} that gets credited.{" "}
                         <button
                           type="button"
                           onClick={() => switchChain({ chainId: USDT_CELO_MAINNET.chainId })}

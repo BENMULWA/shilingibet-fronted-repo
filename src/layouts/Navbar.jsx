@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 import { RiMenuUnfold3Line, RiMenuFold3Line } from "react-icons/ri";
 import {
   FiSearch, FiChevronDown,
-  FiUser, FiClock, FiLogOut
+  FiUser, FiClock, FiLogOut,
+  FiCreditCard, FiSmartphone,
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import { BsChatRightText } from "react-icons/bs";
@@ -134,26 +135,45 @@ export default function Navbar({
             </button>
 
             {/* Balance Capsule */}
-            <div className="flex rounded-2xl border border-white/5 bg-[#07110b] px-2 py-1.5 md:px-3 md:py-2">
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-[10px] leading-none md:gap-2 md:text-xs">
-                  <span className="text-[#9cae9f]">Main</span>
-                  <span className="font-bold text-white">KES {mainBalance}</span>
-                  {activeWallet === "balance" && (
-                    <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-black">
-                      Active
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] leading-none md:gap-2 md:text-xs">
-                  <span className="text-[#9cae9f]">Airtime</span>
-                  <span className="font-bold text-white">KES {airtimeBalance}</span>
-                  {activeWallet === "airtime" && (
-                    <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-black">
-                      Active
-                    </span>
-                  )}
-                </div>
+            <div className="flex items-stretch gap-1 rounded-2xl border border-white/5 bg-[#07110b] p-1">
+              <div
+                className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1 transition-colors md:px-3.5 md:py-1.5 ${
+                  activeWallet === "balance" ? "bg-primary/15 ring-1 ring-primary/50" : ""
+                }`}
+                title="Main wallet"
+              >
+                <span
+                  className={`flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide md:text-[10px] ${
+                    activeWallet === "balance" ? "text-primary" : "text-[#75877a]"
+                  }`}
+                >
+                  <FiCreditCard size={10} />
+                  Main
+                </span>
+                <span className="text-[11px] font-bold leading-tight text-white md:text-sm">
+                  KES {mainBalance}
+                </span>
+              </div>
+
+              <div className="w-px self-stretch bg-white/5" />
+
+              <div
+                className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1 transition-colors md:px-3.5 md:py-1.5 ${
+                  activeWallet === "airtime" ? "bg-primary/15 ring-1 ring-primary/50" : ""
+                }`}
+                title="Airtime wallet"
+              >
+                <span
+                  className={`flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide md:text-[10px] ${
+                    activeWallet === "airtime" ? "text-primary" : "text-[#75877a]"
+                  }`}
+                >
+                  <FiSmartphone size={10} />
+                  Airtime
+                </span>
+                <span className="text-[11px] font-bold leading-tight text-white md:text-sm">
+                  KES {airtimeBalance}
+                </span>
               </div>
             </div>
 

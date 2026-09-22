@@ -12,16 +12,21 @@ import { debouncedWithdraw } from "../../utils/debounce";
 import { normalizeKenyanPhone } from "../../utils/phone";
 
 const SHOW_CRYPTO_UI = true;
+// Comet App withdrawal is temporarily switched off for the MiniPay tester
+// rollout, same as the Deposit page — testers should only see M-Pesa and
+// Crypto right now. Nothing below was deleted, just hidden: flip this back
+// to `true` once Comet withdrawal is ready, no other changes needed.
+const SHOW_COMET_UI = false;
 const TABS = [
   "M-Pesa",
   ...(SHOW_CRYPTO_UI ? ["Crypto"] : []),
-  "Comet App",
+  ...(SHOW_COMET_UI ? ["Comet App"] : []),
 ];
 // Lowered from 1 for staging testing only — the backend has no minimum of
 // its own for crypto withdrawals (celoWithdraw just requires amount > 0 and
 // sufficient balance), so this is a pure UI guard. Restore to 1 before
 // pointing this build at production.
-const MIN_CRYPTO_WITHDRAWAL = 0.2;
+const MIN_CRYPTO_WITHDRAWAL = 0.25;
 const CELO_WITHDRAW_ASSETS = ["USDT", "USDC", "cUSD"];
 const CELO_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -133,7 +138,7 @@ export default function Withdraw() {
       return toast.error("Celo wallet address must be a valid 0x... address.");
     }
     if (!cryptoAmount || cryptoAmountNumber < MIN_CRYPTO_WITHDRAWAL) {
-      return toast.error(`Minimum withdrawal is ${MIN_CRYPTO_WITHDRAWAL} ${cryptoAsset}.`);
+      return toast.error(`Minimum withdrawal is ${MIN_CRYPTO_WITHDRAWAL} ${cryptoAsset} on minipay external wallet.`);
     }
     withdrawCrypto({
       amount: cryptoAmountNumber,
@@ -253,6 +258,15 @@ export default function Withdraw() {
               </button>
             ))}
           </div>
+
+          {!SHOW_COMET_UI && (
+            <div className="rounded-lg bg-primary/10 border border-primary/20 px-3 py-2.5 text-xs text-[#b7c4ba]">
+              <span className="font-semibold text-primary">Two ways to withdraw right now:</span>{" "}
+              <span className="font-semibold text-primary">M-Pesa</span> or{" "}
+              <span className="font-semibold text-primary">Crypto (USDT/USDC/cUSD)</span> to your
+              own Celo wallet. Comet App withdrawal is coming soon.
+            </div>
+          )}
 
           {/* ── M-Pesa Tab ─────────────────────────────────────────────────── */}
           {activeTab === "M-Pesa" && (
@@ -377,7 +391,7 @@ export default function Withdraw() {
           )}
 
           {/* ── Comet App Tab ──────────────────────────────────────────────── */}
-          {activeTab === "Comet App" && (
+          {SHOW_COMET_UI && activeTab === "Comet App" && (
             <>
               {/* Comet App Logo / Header */}
               <div className="flex flex-col items-center gap-3 bg-[#07110b]/85 border border-white/10 rounded-2xl p-6">
